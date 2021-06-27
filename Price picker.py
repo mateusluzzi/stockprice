@@ -4,14 +4,28 @@ import requests
 from alpha_vantage.timeseries import TimeSeries
 # %%
 
-API_KEY = "APUO17BD0D08LYO3"
+API_KEY = "X72MS62TNKB25VS7"
 API_URL = "Https://www.alphavantage.co/query"
 # %%
-ts = TimeSeries(key=API_KEY,output_format='pandas')
-ts.get_symbol_search('PETR')
+tickers = ['IBM','GOOGL']
 
 # %%
-tickers = ['ITUB','PETR4.SAO']
+def tickers_search(tickers_in):
+    tickers = tickers_in
+    aux = 0
+    print('Tickers in:'+str(tickers_in))
+    for ticker in tickers_in:
+        ts = TimeSeries(key=API_KEY,output_format='pandas')
+        ts,meta_data = ts.get_symbol_search(ticker)
+        #ts = ts[ts['4. region'] == 'Brazil/Sao Paolo'] 
+        ts['9. matchScore'] = pd.to_numeric(ts['9. matchScore'])  
+        tickers[aux] = ts.loc[ts.groupby(['1. symbol'])['9. matchScore'].idxmax()]['1. symbol'].iloc[0]
+        aux +=1
+    print('Tickers out:'+str(tickers))
+# %%
+tickers_search(tickers) 
+# %%
+tickers
 # %%
 def intraday(tickers):
     intraday = pd.DataFrame()
@@ -32,10 +46,13 @@ def intraday(tickers):
             intraday = pd.concat([intraday,intraday2])
             print(intraday)
         except:
+            print('Exceção')
             pass
         z += 1
 # %%
-intraday(tickers[:])
+intraday(tickers)
+# %%
+intraday
 # %%
 def daily_adjusted(tickers):
     daily_adjusted = pd.DataFrame()
@@ -66,13 +83,14 @@ def overview(tickers):
             params = {"function":"OVERVIEW",
                     "symbol" : tickers[z],
                     "apikey" : API_KEY}
-
             response = requests.get(API_URL, params)
             dict = response.json()
             data[s] = dict
             z += 1
-        overview = pd.DataFrame.from_dict(data,orient='index').reset_index()    
+        overview = pd.DataFrame.from_dict(data,orient='index').reset_index(drop=True)    
+        return overview
 
 # %%
-overview(tickers[:])
-
+overview(tickers)
+# %%
+overview
